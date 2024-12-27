@@ -19,7 +19,7 @@ struct B : A {};
 struct C : A {};
 
 int main() {
-  RawPtrVisitor<A> v;
+  BasicRawPtrVisitor<A> v;
 
   v.Regist([](A*) { cout << "overloaded::A*" << endl; },
            [](B*) { cout << "overloaded::B*" << endl; },

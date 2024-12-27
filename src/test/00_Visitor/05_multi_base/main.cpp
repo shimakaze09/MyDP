@@ -2,7 +2,7 @@
 // Created by Admin on 27/12/2024.
 //
 
-#include <MyDP/Visitor.h>
+#include <MyDP/MultiVisitor.h>
 
 #include <iostream>
 #include <memory>
@@ -19,20 +19,23 @@ struct B : A {};
 struct C : A {};
 
 struct D {
+  D(A* a) : a(a) {}
+
   virtual ~D() = default;
   A* a;
 };
 
-struct E : D {};
+struct E : D {
+  using D::D;
+};
 
-struct F : D {};
+struct F : D {
+  using D::D;
+};
 
 class AD_Visitor final : public RawPtrMultiVisitor<AD_Visitor, A, D> {
  public:
-  AD_Visitor() {
-    VisitorOf<A>::Regist<A, B, C>();
-    VisitorOf<D>::Regist<D, E, F>();
-  }
+  AD_Visitor() { Regist<A, B, C, D, E, F>(); }
 
  protected:
   void ImplVisit(A*) { cout << "Obj::ImplVisit(A*)" << endl; }
@@ -42,37 +45,32 @@ class AD_Visitor final : public RawPtrMultiVisitor<AD_Visitor, A, D> {
   void ImplVisit(C*) { cout << "Obj::ImplVisit(C*)" << endl; }
 
   void ImplVisit(D* d) {
-    cout << "Obj::ImplVisit(D*)" << endl;
-    cout << "  - ";
+    cout << "Obj::ImplVisit(D*), ";
     Visit(d->a);
   }
 
   void ImplVisit(E* e) {
-    cout << "Obj::ImplVisit(E*)" << endl;
-    cout << "  - ";
+    cout << "Obj::ImplVisit(E*), ";
     Visit(e->a);
   }
 
   void ImplVisit(F* f) {
-    cout << "Obj::ImplVisit(F*)" << endl;
-    cout << "  - ";
+    cout << "Obj::ImplVisit(F*), ";
     Visit(f->a);
   }
 };
 
 int main() {
   AD_Visitor v;
+  v.Regist([](B*) { cout << "lambda(B*)" << endl; },
+           [](C*) { cout << "lambda(C*)" << endl; });
 
   A a;
   B b;
   C c;
-  D d;
-  E e;
-  F f;
-
-  d.a = &a;
-  e.a = &b;
-  f.a = &c;
+  D d(&a);
+  E e(&b);
+  F f(&c);
 
   A* ptrA[3] = {&a, &b, &c};
   D* ptrD[3] = {&d, &e, &f};
@@ -83,5 +81,4 @@ int main() {
   v.Visit(ptrD[0]);
   v.Visit(ptrD[1]);
   v.Visit(ptrD[2]);
-  v.Visit(&e);
 }

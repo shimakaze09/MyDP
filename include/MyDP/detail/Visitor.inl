@@ -4,19 +4,24 @@
 
 #pragma once
 
-#include <MyTemplate/TypeList.h>
+#include <MyTemplate/Typelist.h>
 
 #ifndef NDEBUG
 #include <iostream>
 #endif
 
-namespace My::detail::Visitor_ {}
+namespace My::detail::Visitor_ {
+template <typename Pointer>
+using RemovePtr = std::decay_t<decltype(*std::decay_t<Pointer>{nullptr})>;
+
+struct VoidImpl final {};
+}  // namespace My::detail::Visitor_
 
 namespace My {
 // ref: https://stackoverflow.com/questions/8523762/crtp-with-protected-derived-member
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
-struct Visitor<Base, Impl, AddPointer, PointerCaster>::Accessor : public Impl {
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+struct Visitor<Impl, AddPointer, PointerCaster, Base>::Accessor : public Impl {
   template <typename Derived>
   inline static void ImplVisitOf(Impl* const impl,
                                  AddPointer<Base> ptrBase) noexcept {
@@ -25,9 +30,9 @@ struct Visitor<Base, Impl, AddPointer, PointerCaster>::Accessor : public Impl {
   }
 };
 
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
-void Visitor<Base, Impl, AddPointer, PointerCaster>::Visit(
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
     BasePointer& ptrBase) const noexcept {
   auto target = visitOps.find(typeid(*ptrBase));
   if (target != visitOps.end())
@@ -41,9 +46,9 @@ void Visitor<Base, Impl, AddPointer, PointerCaster>::Visit(
 #endif  // !NDEBUG
 }
 
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
-void Visitor<Base, Impl, AddPointer, PointerCaster>::Visit(
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
     BasePointer&& ptrBase) const noexcept {
   auto target = visitOps.find(typeid(*ptrBase));
   if (target != visitOps.end())
@@ -57,13 +62,13 @@ void Visitor<Base, Impl, AddPointer, PointerCaster>::Visit(
 #endif  // !NDEBUG
 }
 
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
 template <typename Func>
-void Visitor<Base, Impl, AddPointer, PointerCaster>::RegistOne(
+void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
     Func&& func) noexcept {
   using DerivedPointer = Front_t<typename FuncTraits<Func>::ArgList>;
-  using Derived = std::decay_t<decltype(*DerivedPointer{nullptr})>;
+  using Derived = detail::Visitor_::RemovePtr<DerivedPointer>;
   static_assert(std::is_same_v<DerivedPointer, AddPointer<Derived>>);
   static_assert(std::is_base_of_v<Base, Derived>);
 
@@ -81,23 +86,30 @@ void Visitor<Base, Impl, AddPointer, PointerCaster>::RegistOne(
       };
 }
 
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
 template <typename... Funcs>
-void Visitor<Base, Impl, AddPointer, PointerCaster>::Regist(
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Regist(
     Funcs&&... func) noexcept {
-  static_assert(std::is_polymorphic_v<Base> && std::is_final_v<Impl>);
-  static_assert(
-      IsSet_v<TypeList<
-          std::decay_t<decltype(*Front_t<typename FuncTraits<Funcs>::ArgList>{
-              nullptr})>...>>);
+  static_assert(std::is_polymorphic_v<Base>);
+  static_assert(std::is_final_v<Impl>);
+  static_assert(IsSet_v<TypeList<detail::Visitor_::RemovePtr<
+                    Front_t<typename FuncTraits<Funcs>::ArgList>>...>>);
   (RegistOne<Funcs>(std::forward<Funcs>(func)), ...);
 }
 
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
 template <typename Derived>
-void Visitor<Base, Impl, AddPointer, PointerCaster>::RegistOne() noexcept {
+void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne() noexcept {
+  RegistOne<Derived>(static_cast<Impl*>(this));
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+template <typename Derived>
+inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
+    Impl* impl) noexcept {
 #ifndef NDEBUG
   if (visitOps.find(typeid(Derived)) != visitOps.end()) {
     std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
@@ -106,57 +118,62 @@ void Visitor<Base, Impl, AddPointer, PointerCaster>::RegistOne() noexcept {
   }
 #endif  // !NDEBUG
 
-  visitOps[typeid(Derived)] =
-      [impl = static_cast<Impl*>(this)](BasePointer ptrBase) {
-        Accessor::template ImplVisitOf<Derived>(impl, ptrBase);
-      };
+  visitOps[typeid(Derived)] = [impl](BasePointer ptrBase) {
+    Accessor::template ImplVisitOf<Derived>(impl, ptrBase);
+  };
 }
 
-template <typename Base, typename Impl, template <typename> class AddPointer,
-          typename PointerCaster>
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
 template <typename... Deriveds>
-inline void Visitor<Base, Impl, AddPointer, PointerCaster>::Regist() noexcept {
-  static_assert(std::is_polymorphic_v<Base> && std::is_final_v<Impl>);
+inline void Visitor<Impl, AddPointer, PointerCaster, Base>::Regist() noexcept {
+  static_assert(std::is_polymorphic_v<Base>);
+  static_assert(std::is_final_v<Impl>);
   static_assert(IsSet_v<TypeList<Deriveds...>>);
   (RegistOne<Deriveds>(), ...);
 }
 
-template <typename Base, typename Impl>
-class SharedPtrVisitor : public Visitor<Base, Impl, std::shared_ptr> {};
+/*template<typename Impl, template<typename>class AddPointer, typename PointerCaster, typename Base>
+	template<typename Derived, typename FuncObj>
+	void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverloadOne(FuncObj& funcObj) noexcept {
+		visitOps[typeid(Derived)] = [&funcObj](BasePointer ptrBase) {
+			funcObj(PointerCaster::template run<Derived, Base>(ptrBase));
+		};
+	}
+
+	template<typename Impl, template<typename>class AddPointer, typename PointerCaster, typename Base>
+	template<typename Derived, typename FuncObj>
+	void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverloadOne(FuncObj&& funcObj) noexcept {
+		visitOps[typeid(Derived)] = [funcObj=std::move(funcObj)](BasePointer ptrBase) {
+			funcObj(PointerCaster::template run<Derived, Base>(ptrBase));
+		};
+	}
+
+	template<typename Impl, template<typename>class AddPointer, typename PointerCaster, typename Base>
+	template<typename... Deriveds, typename FuncObj>
+	void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverload(FuncObj&& funcObj) noexcept {
+		static_assert(IsSet_v<TypeList<Deriveds...>>);
+		(RegistOverloadOne<Deriveds>(std::forward<FuncObj>(funcObj)), ...);
+	}*/
+
+template <typename Impl, typename Base>
+class RawPtrVisitor
+    : public Visitor<Impl, std::add_pointer_t,
+                     detail::Visitor_::PointerCaster<std::add_pointer_t>,
+                     Base> {};
+
+template <typename Impl, typename Base>
+class SharedPtrVisitor
+    : public Visitor<Impl, std::shared_ptr,
+                     detail::Visitor_::PointerCaster<std::shared_ptr>, Base> {};
 
 template <typename Base>
-class SharedPtrVisitor<Base, void> final
-    : public Visitor<Base, void, std::shared_ptr> {};
-
-template <typename Base, typename Impl>
-class RawPtrVisitor : public Visitor<Base, Impl> {};
+class BasicSharedPtrVisitor final
+    : public SharedPtrVisitor<detail::Visitor_::VoidImpl, Base> {};
 
 template <typename Base>
-class RawPtrVisitor<Base, void> final : public Visitor<Base, void> {};
-
-template <typename Impl, typename... Bases>
-class SharedPtrMultiVisitor : public Visitor<Bases, Impl, std::shared_ptr>... {
-  // TODO: static_assert(Independent<TypeList<Bases...>>)
-  static_assert(IsSet_v<TypeList<Bases...>>);
-
- public:
-  using Visitor<Bases, Impl, std::shared_ptr>::Visit...;
-
-  template <typename Base>
-  using VisitorOf = Visitor<Base, Impl>;
-};
-
-template <typename Impl, typename... Bases>
-class RawPtrMultiVisitor : public Visitor<Bases, Impl>... {
-  // TODO: static_assert(Independent<TypeList<Bases...>>)
-  static_assert(IsSet_v<TypeList<Bases...>>);
-
- public:
-  using Visitor<Bases, Impl>::Visit...;
-
-  template <typename Base>
-  using VisitorOf = Visitor<Base, Impl>;
-};
+class BasicRawPtrVisitor final
+    : public RawPtrVisitor<detail::Visitor_::VoidImpl, Base> {};
 }  // namespace My
 
 namespace My::detail::Visitor_ {

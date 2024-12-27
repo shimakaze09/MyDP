@@ -25,8 +25,8 @@ int main() {
 #endif  // !NDEBUG
 
   {
-    cout << "[ test 0 ] hasn't regist struct C" << endl;
-    RawPtrVisitor<A> v;
+    cout << "[ test 0 ] hasn't register struct C" << endl;
+    BasicRawPtrVisitor<A> v;
     v.Regist([](A*) { cout << "Lambda(A*)" << endl; });
     v.Regist([](B*) { cout << "Lambda(B*)" << endl; });
     // v.Regist([](C*) { cout << "Lambda(C*)" << endl; });
@@ -43,7 +43,7 @@ int main() {
 
   {
     cout << "[ test 1 ] repeatedly regist struct C" << endl;
-    SharedPtrVisitor<A> v;
+    BasicSharedPtrVisitor<A> v;
     v.Regist([](shared_ptr<A>) { cout << "Lambda(shared_ptr<A>)" << endl; });
     v.Regist([](shared_ptr<B>) { cout << "Lambda(shared_ptr<B>)" << endl; });
     v.Regist([](shared_ptr<C>) { cout << "Lambda(shared_ptr<C>)" << endl; });
