@@ -92,7 +92,7 @@ template <typename... Funcs>
 void Visitor<Impl, AddPointer, PointerCaster, Base>::Regist(
     Funcs&&... func) noexcept {
   static_assert(std::is_polymorphic_v<Base>);
-  static_assert(std::is_final_v<Impl>);
+  // static_assert(std::is_final_v<Impl>);
   static_assert(IsSet_v<TypeList<detail::Visitor_::RemovePtr<
                     Front_t<typename FuncTraits<Funcs>::ArgList>>...>>);
   (RegistOne<Funcs>(std::forward<Funcs>(func)), ...);
@@ -128,33 +128,40 @@ template <typename Impl, template <typename> class AddPointer,
 template <typename... Deriveds>
 inline void Visitor<Impl, AddPointer, PointerCaster, Base>::Regist() noexcept {
   static_assert(std::is_polymorphic_v<Base>);
-  static_assert(std::is_final_v<Impl>);
+  // static_assert(std::is_final_v<Impl>);
   static_assert(IsSet_v<TypeList<Deriveds...>>);
   (RegistOne<Deriveds>(), ...);
 }
 
-/*template<typename Impl, template<typename>class AddPointer, typename PointerCaster, typename Base>
-	template<typename Derived, typename FuncObj>
-	void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverloadOne(FuncObj& funcObj) noexcept {
-		visitOps[typeid(Derived)] = [&funcObj](BasePointer ptrBase) {
-			funcObj(PointerCaster::template run<Derived, Base>(ptrBase));
-		};
-	}
-
-	template<typename Impl, template<typename>class AddPointer, typename PointerCaster, typename Base>
-	template<typename Derived, typename FuncObj>
-	void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverloadOne(FuncObj&& funcObj) noexcept {
-		visitOps[typeid(Derived)] = [funcObj=std::move(funcObj)](BasePointer ptrBase) {
-			funcObj(PointerCaster::template run<Derived, Base>(ptrBase));
-		};
-	}
-
-	template<typename Impl, template<typename>class AddPointer, typename PointerCaster, typename Base>
-	template<typename... Deriveds, typename FuncObj>
-	void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverload(FuncObj&& funcObj) noexcept {
-		static_assert(IsSet_v<TypeList<Deriveds...>>);
-		(RegistOverloadOne<Deriveds>(std::forward<FuncObj>(funcObj)), ...);
-	}*/
+// template <typename Impl, template <typename> class AddPointer,
+//           typename PointerCaster, typename Base>
+// template <typename Derived, typename FuncObj>
+// void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverloadOne(
+//     FuncObj& funcObj) noexcept {
+//   visitOps[typeid(Derived)] = [&funcObj](BasePointer ptrBase) {
+//     funcObj(PointerCaster::template run<Derived, Base>(ptrBase));
+//   };
+// }
+//
+// template <typename Impl, template <typename> class AddPointer,
+//           typename PointerCaster, typename Base>
+// template <typename Derived, typename FuncObj>
+// void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverloadOne(
+//     FuncObj&& funcObj) noexcept {
+//   visitOps[typeid(Derived)] = [funcObj =
+//                                    std::move(funcObj)](BasePointer ptrBase) {
+//     funcObj(PointerCaster::template run<Derived, Base>(ptrBase));
+//   };
+// }
+//
+// template <typename Impl, template <typename> class AddPointer,
+//           typename PointerCaster, typename Base>
+// template <typename... Deriveds, typename FuncObj>
+// void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOverload(
+//     FuncObj&& funcObj) noexcept {
+//   static_assert(IsSet_v<TypeList<Deriveds...>>);
+//   (RegistOverloadOne<Deriveds>(std::forward<FuncObj>(funcObj)), ...);
+// }
 
 template <typename Impl, typename Base>
 class RawPtrVisitor
@@ -168,11 +175,11 @@ class SharedPtrVisitor
                      detail::Visitor_::PointerCaster<std::shared_ptr>, Base> {};
 
 template <typename Base>
-class BasicSharedPtrVisitor final
+class BasicSharedPtrVisitor
     : public SharedPtrVisitor<detail::Visitor_::VoidImpl, Base> {};
 
 template <typename Base>
-class BasicRawPtrVisitor final
+class BasicRawPtrVisitor
     : public RawPtrVisitor<detail::Visitor_::VoidImpl, Base> {};
 }  // namespace My
 

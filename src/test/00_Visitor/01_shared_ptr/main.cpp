@@ -18,7 +18,7 @@ struct B : A {};
 
 struct C : A {};
 
-struct CumtomVisitor final : public SharedPtrVisitor<A, CumtomVisitor> {
+struct CumtomVisitor : public SharedPtrVisitor<A, CumtomVisitor> {
   CumtomVisitor() { Regist<A, B>(); }
 
  protected:

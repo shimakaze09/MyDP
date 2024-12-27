@@ -17,7 +17,7 @@ struct B : A {};
 
 struct C : A {};
 
-struct CumtomVisitor final : public RawPtrVisitor<CumtomVisitor, A> {
+struct CumtomVisitor : public RawPtrVisitor<CumtomVisitor, A> {
   CumtomVisitor() { Regist<A, B>(); }
 
  protected:
