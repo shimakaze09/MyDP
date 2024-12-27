@@ -86,7 +86,7 @@ template <typename Base, typename Impl, template <typename> class AddPointer,
 template <typename... Funcs>
 void Visitor<Base, Impl, AddPointer, PointerCaster>::Regist(
     Funcs&&... func) noexcept {
-  static_assert(std::is_polymorphic_v<Base>);
+  static_assert(std::is_polymorphic_v<Base> && std::is_final_v<Impl>);
   static_assert(
       IsSet_v<TypeList<
           std::decay_t<decltype(*Front_t<typename FuncTraits<Funcs>::ArgList>{
@@ -116,7 +116,7 @@ template <typename Base, typename Impl, template <typename> class AddPointer,
           typename PointerCaster>
 template <typename... Deriveds>
 inline void Visitor<Base, Impl, AddPointer, PointerCaster>::Regist() noexcept {
-  static_assert(std::is_polymorphic_v<Base>);
+  static_assert(std::is_polymorphic_v<Base> && std::is_final_v<Impl>);
   static_assert(IsSet_v<TypeList<Deriveds...>>);
   (RegistOne<Deriveds>(), ...);
 }
@@ -136,6 +136,9 @@ class RawPtrVisitor<Base, void> final : public Visitor<Base, void> {};
 
 template <typename Impl, typename... Bases>
 class SharedPtrMultiVisitor : public Visitor<Bases, Impl, std::shared_ptr>... {
+  // TODO: static_assert(Independent<TypeList<Bases...>>)
+  static_assert(IsSet_v<TypeList<Bases...>>);
+
  public:
   using Visitor<Bases, Impl, std::shared_ptr>::Visit...;
 
@@ -145,6 +148,9 @@ class SharedPtrMultiVisitor : public Visitor<Bases, Impl, std::shared_ptr>... {
 
 template <typename Impl, typename... Bases>
 class RawPtrMultiVisitor : public Visitor<Bases, Impl>... {
+  // TODO: static_assert(Independent<TypeList<Bases...>>)
+  static_assert(IsSet_v<TypeList<Bases...>>);
+
  public:
   using Visitor<Bases, Impl>::Visit...;
 

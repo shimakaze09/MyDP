@@ -10,7 +10,7 @@ struct A;
 struct B;
 struct C;
 
-class AVisitor : public RawPtrMultiVisitor<AVisitor, A, B, C> {
+class AVisitor final : public RawPtrMultiVisitor<AVisitor, A, B, C> {
  public:
   AVisitor();
 

@@ -21,6 +21,8 @@ template <typename Base, typename Impl = void>
 class SharedPtrVisitor;
 template <typename Base, typename Impl = void>
 class RawPtrVisitor;
+
+// use VisitorOf<Base> to get Visitor of Base
 template <typename Impl, typename... Bases>
 class SharedPtrMultiVisitor;
 template <typename Impl, typename... Bases>
@@ -48,7 +50,7 @@ class Visitor {
  protected:
   using VisitorType = Visitor;
 
-  // regist menber function with
+  // register member function with
   // - name : ImplVisit
   // - argument : AddPointer<Deriveds>
   template <typename... Deriveds>
