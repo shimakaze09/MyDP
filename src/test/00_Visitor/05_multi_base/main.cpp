@@ -27,18 +27,24 @@ struct E : D {};
 
 struct F : D {};
 
-struct AD_Visitor : Visitor<AD_Visitor, A>, Visitor<AD_Visitor, D> {
+struct AD_Visitor : RawPtrVisitor<A, AD_Visitor>, RawPtrVisitor<D, AD_Visitor> {
   AD_Visitor() {
-    Visitor<AD_Visitor, D>::Regist<D, E, F>();
-    Visitor<AD_Visitor, A>::Regist<A, B, C>();
+    RawPtrVisitor<A, AD_Visitor>::Regist<A, B, C>();
+    RawPtrVisitor<D, AD_Visitor>::Regist<D, E, F>();
   }
 
-  using Visitor<AD_Visitor, A>::Visit;
-  using Visitor<AD_Visitor, D>::Visit;
+  using RawPtrVisitor<A, AD_Visitor>::Visit;
+  using RawPtrVisitor<D, AD_Visitor>::Visit;
 
  private:
-  friend class Visitor<AD_Visitor, D>;
-  friend class Visitor<AD_Visitor, A>;
+  friend class Visitor<A, AD_Visitor>;
+  friend class Visitor<D, AD_Visitor>;
+
+  void ImplVisit(A*) { cout << "Obj::ImplVisit(A*)" << endl; }
+
+  void ImplVisit(B*) { cout << "Obj::ImplVisit(B*)" << endl; }
+
+  void ImplVisit(C*) { cout << "Obj::ImplVisit(C*)" << endl; }
 
   void ImplVisit(D* d) {
     cout << "Obj::ImplVisit(D*)" << endl;
@@ -57,12 +63,6 @@ struct AD_Visitor : Visitor<AD_Visitor, A>, Visitor<AD_Visitor, D> {
     cout << "  - ";
     Visit(f->a);
   }
-
-  void ImplVisit(A*) { cout << "Obj::ImplVisit(A*)" << endl; }
-
-  void ImplVisit(B*) { cout << "Obj::ImplVisit(B*)" << endl; }
-
-  void ImplVisit(C*) { cout << "Obj::ImplVisit(C*)" << endl; }
 };
 
 int main() {

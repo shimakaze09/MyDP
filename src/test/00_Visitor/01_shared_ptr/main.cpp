@@ -18,7 +18,7 @@ struct B : A {};
 
 struct C : A {};
 
-struct CumtomVisitor : public Visitor<CumtomVisitor, A, std::shared_ptr> {
+struct CumtomVisitor : public SharedPtrVisitor<A, CumtomVisitor> {
   CumtomVisitor() { Regist<A, B>(); }
 
  private:
