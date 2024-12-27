@@ -98,6 +98,13 @@ class Visitor {
  private:
   detail::TypeMap<std::function<void(BasePointer)>> visitOps;
 };
+
+template <typename Base>
+class SharedPtrVisitor final
+    : public Visitor<SharedPtrVisitor<Base>, Base, std::shared_ptr> {};
+
+template <typename Base>
+class RawPtrVisitor final : public Visitor<RawPtrVisitor<Base>, Base> {};
 }  // namespace My
 
 #include "detail/Visitor.inl"
