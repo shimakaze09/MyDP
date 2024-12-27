@@ -10,7 +10,7 @@ using namespace My;
 using namespace std;
 
 struct A {
-  virtual ~A() {}
+  virtual ~A() = default;
 };
 
 struct B : A {};
@@ -19,8 +19,8 @@ struct C : A {};
 
 struct GetName : public Visitor<GetName, A> {
   GetName() {
-    Reg<A>();
-    Reg<B>();
+    Regist<A>();
+    Regist<B>();
   }
 
  private:
@@ -35,7 +35,7 @@ struct GetName : public Visitor<GetName, A> {
 
 int main() {
   GetName v;
-  v.Reg([](C*) { cout << "Lambda(C*)" << endl; });
+  v.Regist([](C*) { cout << "Lambda(C*)" << endl; });
 
   A a;
   B b;

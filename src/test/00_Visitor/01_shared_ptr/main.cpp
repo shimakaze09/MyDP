@@ -11,7 +11,7 @@ using namespace My;
 using namespace std;
 
 struct A {
-  virtual ~A() {}
+  virtual ~A() = default;
 };
 
 struct B : A {};
@@ -20,8 +20,8 @@ struct C : A {};
 
 struct GetName : public Visitor<GetName, A, std::shared_ptr> {
   GetName() {
-    Reg<A>();
-    Reg<B>();
+    Regist<A>();
+    Regist<B>();
   }
 
  private:
@@ -40,7 +40,7 @@ struct GetName : public Visitor<GetName, A, std::shared_ptr> {
 
 int main() {
   GetName v;
-  v.Reg([](shared_ptr<C>) { cout << "Lambda(shared_ptr<C>)" << endl; });
+  v.Regist([](shared_ptr<C>) { cout << "Lambda(shared_ptr<C>)" << endl; });
 
   auto a = make_shared<A>();
   auto b = make_shared<B>();

@@ -19,12 +19,19 @@ struct B : A {};
 struct C : A {};
 
 int main() {
+#ifdef NDEBUG
+  cout << "You should run test_00_Visitor_03_robustness in Debug mode." << endl;
+  return 1;
+#endif  // !NDEBUG
+
   {
-    // test RawPtrVisitor
+    cout << "[ test 0 ] hasn't regist struct C" << endl;
     RawPtrVisitor<A> v;
     v.Regist([](A*) { cout << "Lambda(A*)" << endl; });
     v.Regist([](B*) { cout << "Lambda(B*)" << endl; });
-    v.Regist([](C*) { cout << "Lambda(C*)" << endl; });
+    /*v.Regist([](C*) {
+        cout << "Lambda(C*)" << endl;
+        });*/
     A a;
     B b;
     C c;
@@ -33,12 +40,15 @@ int main() {
     v.Visit(ptrA[0]);
     v.Visit(ptrA[1]);
     v.Visit(ptrA[2]);
+    cout << endl;
   }
 
-  {  // test SharedPtrVisitor
+  {
+    cout << "[ test 1 ] repeatedly regist struct C" << endl;
     SharedPtrVisitor<A> v;
     v.Regist([](shared_ptr<A>) { cout << "Lambda(shared_ptr<A>)" << endl; });
     v.Regist([](shared_ptr<B>) { cout << "Lambda(shared_ptr<B>)" << endl; });
+    v.Regist([](shared_ptr<C>) { cout << "Lambda(shared_ptr<C>)" << endl; });
     v.Regist([](shared_ptr<C>) { cout << "Lambda(shared_ptr<C>)" << endl; });
 
     auto a = make_shared<A>();
@@ -49,6 +59,7 @@ int main() {
     v.Visit(ptrA[0]);
     v.Visit(ptrA[1]);
     v.Visit(ptrA[2]);
+    cout << endl;
   }
 
   return 0;
