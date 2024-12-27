@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <MyTemplate/TypeList.h>
+
 #ifndef NDEBUG
 #include <iostream>
 #endif
@@ -69,7 +71,7 @@ void Visitor<Impl, Base, AddPointer, PointerCaster>::Regist(
 template <typename Impl, typename Base, template <typename> class AddPointer,
           typename PointerCaster>
 template <typename Derived>
-void Visitor<Impl, Base, AddPointer, PointerCaster>::Regist() noexcept {
+void Visitor<Impl, Base, AddPointer, PointerCaster>::RegistOne() noexcept {
   using DerivedPointer = AddPointer<Derived>;
   using Func = void (Impl::*)(DerivedPointer);
 
@@ -86,6 +88,14 @@ void Visitor<Impl, Base, AddPointer, PointerCaster>::Regist() noexcept {
         constexpr Func f = &Impl::ImplVisit;
         (impl->*f)(PointerCaster::template run<Derived, Base>(ptr_base));
       };
+}
+
+template <typename Impl, typename Base, template <typename> class AddPointer,
+          typename PointerCaster>
+template <typename... Deriveds>
+inline void Visitor<Impl, Base, AddPointer, PointerCaster>::Regist() noexcept {
+  static_assert(IsSet_v<TypeList<Deriveds...>>);
+  (RegistOne<Deriveds>(), ...);
 }
 
 template <typename Base>

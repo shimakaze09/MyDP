@@ -17,24 +17,21 @@ struct B : A {};
 
 struct C : A {};
 
-struct GetName : public Visitor<GetName, A> {
-  GetName() {
-    Regist<A>();
-    Regist<B>();
-  }
+struct CumtomVisitor : public Visitor<CumtomVisitor, A> {
+  CumtomVisitor() { Regist<A, B>(); }
 
  private:
   friend class VisitorType;
 
-  void ImplVisit(A*) { cout << "GetName::ImplVisit(A*)" << endl; }
+  void ImplVisit(A*) { cout << "CumtomVisitor::ImplVisit(A*)" << endl; }
 
-  void ImplVisit(B*) { cout << "GetName::ImplVisit(B*)" << endl; }
+  void ImplVisit(B*) { cout << "CumtomVisitor::ImplVisit(B*)" << endl; }
 
   string rst;
 };
 
 int main() {
-  GetName v;
+  CumtomVisitor v;
   v.Regist([](C*) { cout << "Lambda(C*)" << endl; });
 
   A a;

@@ -29,9 +29,7 @@ int main() {
     RawPtrVisitor<A> v;
     v.Regist([](A*) { cout << "Lambda(A*)" << endl; });
     v.Regist([](B*) { cout << "Lambda(B*)" << endl; });
-    /*v.Regist([](C*) {
-        cout << "Lambda(C*)" << endl;
-        });*/
+    // v.Regist([](C*) { cout << "Lambda(C*)" << endl; });
     A a;
     B b;
     C c;
