@@ -21,7 +21,7 @@ struct C : A {};
 struct CumtomVisitor : public SharedPtrVisitor<A, CumtomVisitor> {
   CumtomVisitor() { Regist<A, B>(); }
 
- private:
+ protected:
   friend class VisitorType;
 
   void ImplVisit(shared_ptr<A>) {
