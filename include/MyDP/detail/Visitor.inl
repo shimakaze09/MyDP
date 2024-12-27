@@ -29,7 +29,6 @@ template <typename Base, typename Impl, template <typename> class AddPointer,
           typename PointerCaster>
 void Visitor<Base, Impl, AddPointer, PointerCaster>::Visit(
     BasePointer& ptrBase) const noexcept {
-  // Don't use typeid(T) because it might be polymorphic
   auto target = visitOps.find(typeid(*ptrBase));
   if (target != visitOps.end())
     target->second(ptrBase);
@@ -87,6 +86,7 @@ template <typename Base, typename Impl, template <typename> class AddPointer,
 template <typename... Funcs>
 void Visitor<Base, Impl, AddPointer, PointerCaster>::Regist(
     Funcs&&... func) noexcept {
+  static_assert(std::is_polymorphic_v<Base>);
   static_assert(
       IsSet_v<TypeList<
           std::decay_t<decltype(*Front_t<typename FuncTraits<Funcs>::ArgList>{
@@ -116,6 +116,7 @@ template <typename Base, typename Impl, template <typename> class AddPointer,
           typename PointerCaster>
 template <typename... Deriveds>
 inline void Visitor<Base, Impl, AddPointer, PointerCaster>::Regist() noexcept {
+  static_assert(std::is_polymorphic_v<Base>);
   static_assert(IsSet_v<TypeList<Deriveds...>>);
   (RegistOne<Deriveds>(), ...);
 }

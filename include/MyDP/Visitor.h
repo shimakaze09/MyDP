@@ -32,7 +32,8 @@ template <typename Base, typename Impl,
           template <typename> class AddPointer = std::add_pointer_t,
           typename PointerCaster = detail::Visitor_::PointerCaster<AddPointer>>
 class Visitor {
-  static_assert(std::is_polymorphic_v<Base>);
+  // check it in Regist
+  // static_assert(std::is_polymorphic_v<Base>);
   using BasePointer = AddPointer<Base>;
 
  public:
@@ -48,7 +49,7 @@ class Visitor {
   using VisitorType = Visitor;
 
   // regist menber function with
-  // - name     : ImplVisit
+  // - name : ImplVisit
   // - argument : AddPointer<Deriveds>
   template <typename... Deriveds>
   inline void Regist() noexcept;
