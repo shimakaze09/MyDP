@@ -26,8 +26,6 @@ struct CumtomVisitor : public Visitor<CumtomVisitor, A> {
   void ImplVisit(A*) { cout << "CumtomVisitor::ImplVisit(A*)" << endl; }
 
   void ImplVisit(B*) { cout << "CumtomVisitor::ImplVisit(B*)" << endl; }
-
-  string rst;
 };
 
 int main() {
