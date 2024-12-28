@@ -4,7 +4,9 @@
 
 #pragma once
 
-#include <MyTemplate/TypeList.h>
+#include "../../vtable.h"
+
+#include <MyTemplate/Typelist.h>
 #include <cassert>
 
 #ifndef NDEBUG
@@ -16,29 +18,6 @@ template <typename Pointer>
 using RemovePtr = std::decay_t<decltype(*std::decay_t<Pointer>{nullptr})>;
 
 struct VoidImpl final {};
-
-template <typename T>
-inline static const void* vfptr(T* ptr) noexcept {
-  assert(ptr != nullptr);
-  return *reinterpret_cast<void**>(ptr);
-}
-
-template <typename Ptr>
-inline static const void* vfptr(Ptr&& ptr) noexcept {
-  return vfptr(&(*ptr));
-}
-
-template <typename T>
-struct vfptr_of {
-  inline static void regist(T* ptr) noexcept { value = vfptr(ptr); }
-
-  template <typename Ptr>
-  inline static void regist(Ptr&& ptr) noexcept {
-    regist(&(*ptr));
-  }
-
-  inline static const void* value{nullptr};
-};
 }  // namespace My::detail::Visitor_
 
 namespace My {
@@ -49,8 +28,8 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistVFPtr(
     DerivedPtr&& ptrDerived) noexcept {
   using Derived = detail::Visitor_::RemovePtr<DerivedPtr>;
   static_assert(std::is_base_of_v<Base, Derived>);
-  assert(detail::Visitor_::vfptr_of<Derived>::value == nullptr);
-  detail::Visitor_::vfptr_of<Derived>::regist(ptrDerived);
+  assert(vtable_of<Derived>::get() == nullptr);
+  vtable_of<Derived>::regist(ptrDerived);
 }
 
 // ref: https://stackoverflow.com/questions/8523762/crtp-with-protected-derived-member
@@ -69,7 +48,7 @@ template <typename Impl, template <typename> class AddPointer,
           typename PointerCaster, typename Base>
 void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
     BasePointer& ptrBase) const noexcept {
-  auto target = callbacks.find(detail::Visitor_::vfptr(ptrBase));
+  auto target = callbacks.find(vtable(ptrBase));
   if (target != callbacks.end())
     target->second(ptrBase);
 #ifndef NDEBUG
@@ -85,7 +64,7 @@ template <typename Impl, template <typename> class AddPointer,
           typename PointerCaster, typename Base>
 void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
     BasePointer&& ptrBase) const noexcept {
-  auto target = callbacks.find(detail::Visitor_::vfptr(ptrBase));
+  auto target = callbacks.find(vtable(ptrBase));
   if (target != callbacks.end())
     target->second(std::move(ptrBase));
 #ifndef NDEBUG
@@ -107,12 +86,7 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
   static_assert(std::is_same_v<DerivedPointer, AddPointer<Derived>>);
   static_assert(std::is_base_of_v<Base, Derived>);
 
-  if constexpr (std::is_constructible_v<Derived>) {
-    if (detail::Visitor_::vfptr_of<Derived>::value == nullptr)
-      detail::Visitor_::vfptr_of<Derived>::regist(&Derived{});
-  }
-
-  const void* p = detail::Visitor_::vfptr_of<Derived>::value;
+  const void* p = vtable_of<Derived>::get();
   assert(p != nullptr);
 
 #ifndef NDEBUG
@@ -134,7 +108,7 @@ template <typename... Funcs>
 void Visitor<Impl, AddPointer, PointerCaster, Base>::Regist(
     Funcs&&... func) noexcept {
   static_assert(std::is_polymorphic_v<Base>);
-  // static_assert(std::is_final_v<Impl>);
+  //static_assert(std::is_final_v<Impl>);
   static_assert(IsSet_v<TypeList<detail::Visitor_::RemovePtr<
                     Front_t<typename FuncTraits<Funcs>::ArgList>>...>>);
   (RegistOne<Funcs>(std::forward<Funcs>(func)), ...);
@@ -152,12 +126,7 @@ template <typename Impl, template <typename> class AddPointer,
 template <typename Derived>
 inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
     Impl* impl) noexcept {
-  if constexpr (std::is_constructible_v<Derived>) {
-    if (detail::Visitor_::vfptr_of<Derived>::value == nullptr)
-      detail::Visitor_::vfptr_of<Derived>::regist(&Derived{});
-  }
-
-  const void* p = detail::Visitor_::vfptr_of<Derived>::value;
+  const void* p = vtable_of<Derived>::get();
   assert(p != nullptr);
 
 #ifndef NDEBUG

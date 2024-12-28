@@ -68,7 +68,7 @@ class Visitor {
   inline void RegistOne(Impl* impl) noexcept;  // for MultiVisitor
 
  private:
-  // vfptr to callbacks
+  // vtable to callbacks
   std::unordered_map<const void*, std::function<void(BasePointer)>> callbacks;
 
  private:
