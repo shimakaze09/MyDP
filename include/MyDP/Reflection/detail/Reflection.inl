@@ -27,7 +27,7 @@ Reflection<Obj>& Reflection<Obj>::Regist(T Obj::* ptr,
 
 template <typename Obj>
 template <typename U>
-const MemVar<U Obj::*> Reflection<Obj>::Var(
+const MemVar<U Obj::*>* Reflection<Obj>::Var(
     const std::string& name) const noexcept {
   auto target = n2mv.find(name);
   if (target != n2mv.end())
@@ -42,7 +42,7 @@ const MemVar<U Obj::*> Reflection<Obj>::Var(
 }
 
 template <typename Obj>
-const std::map<std::string, MemVar<void * Obj::*>> Reflection<Obj>::Vars()
+const std::map<std::string, MemVar<void * Obj::*>*> Reflection<Obj>::Vars()
     const noexcept {
   return n2mv;
 }
@@ -68,7 +68,7 @@ struct Regist<Ret (Obj::*)(Args...)> {
                 << "\t" << name << " is already registed" << std::endl;
     }
 #endif  // !NDEBUG
-    refl.n2mf[name] = MemFunc<Func Obj::*>{ptr};
+    refl.n2mf[name] = new MemFunc<Func Obj::*>{ptr};
   }
 };
 
@@ -84,7 +84,7 @@ struct Regist<Ret (Obj::*)(Args...) const> {
                 << "\t" << name << " is already registed" << std::endl;
     }
 #endif  // !NDEBUG
-    refl.n2mfc[name] = MemFunc<Func Obj::*>{ptr};
+    refl.n2mfc[name] = new MemFunc<Func Obj::*>{ptr};
   }
 };
 
@@ -98,7 +98,7 @@ struct Regist<T Obj::*> {
                 << "\t" << name << " is already registed" << std::endl;
     }
 #endif  // !NDEBUG
-    refl.n2mv[name] = MemVar<T Obj::*>{ptr};
+    refl.n2mv[name] = new MemVar<T Obj::*>{ptr};
   }
 };
 

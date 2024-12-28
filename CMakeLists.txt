@@ -52,6 +52,7 @@ INCLUDE(Tools)
 INCLUDE_DIRECTORIES(
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/external/MyTemplate/include
+        ${PROJECT_SOURCE_DIR}/external/nameof/include
         # $ENV{XXX_INCLUDE_PATH}
         # ...
 )

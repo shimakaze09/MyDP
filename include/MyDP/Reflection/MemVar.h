@@ -17,7 +17,7 @@ class MemVar<void * Obj::*> {
 
   template <typename U>
   const MemVar<U Obj::*> As() const noexcept {
-    return ptr;
+    return reinterpret_cast<U Obj::*>(ptr);
   }
 
  protected:
@@ -30,7 +30,7 @@ class MemVar<T Obj::*> final : public MemVar<void * Obj::*> {
   using Base = MemVar<void * Obj::*>;
 
   template <typename U>
-  MemVar(U Obj::* ptr = nullptr) : Base(reinterpret_cast<void * Obj::*>(ptr)) {}
+  MemVar(T Obj::* ptr = nullptr) : Base(reinterpret_cast<void * Obj::*>(ptr)) {}
 
   T& Of(Obj& obj) const noexcept {
     return obj.*reinterpret_cast<T Obj::*>(Base::ptr);
