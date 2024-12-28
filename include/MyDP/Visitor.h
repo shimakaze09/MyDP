@@ -14,7 +14,7 @@
 namespace My::detail::Visitor_ {
 template <template <typename> class AddPointer>
 struct PointerCaster;
-}
+}  // namespace My::detail::Visitor_
 
 namespace My {
 template <typename Impl, template <typename> class AddPointer,
@@ -48,10 +48,14 @@ class Visitor {
   template <typename... Funcs>
   inline void Regist(Funcs&&... func) noexcept;
 
+  // for Derived without default constructor
+  template <typename DerivedPtr>
+  static void RegistVFPtr(DerivedPtr&& ptrDerived) noexcept;
+
  protected:
   using VisitorType = Visitor;
 
-  // regist menber function with
+  // regist member function with
   // - name : ImplVisit
   // - argument : AddPointer<Deriveds>
   template <typename... Deriveds>
@@ -66,7 +70,8 @@ class Visitor {
   inline void RegistOne(Impl* impl) noexcept;  // for MultiVisitor
 
  private:
-  detail::TypeMap<std::function<void(BasePointer)>> visitOps;
+  // vfptr to callbacks
+  std::unordered_map<const void*, std::function<void(BasePointer)>> callbacks;
 
  private:
   struct Accessor;
@@ -74,17 +79,6 @@ class Visitor {
   template <typename Impl, template <typename> class AddPointer,
             typename PointerCaster, typename... Bases>
   friend class MultiVisitor;
-
-  // public:
-  // regist : callable object
-  //  template <typename... Deriveds, typename FuncObj>
-  //  inline void RegistOverload(FuncObj&& funcObj) noexcept;
-  //
-  // private:
-  //  template <typename Derived, typename FuncObj>
-  //  void RegistOverloadOne(FuncObj& funcObj) noexcept;
-  //  template <typename Derived, typename FuncObj>
-  //  void RegistOverloadOne(FuncObj&& funcObj) noexcept;
 };
 }  // namespace My
 

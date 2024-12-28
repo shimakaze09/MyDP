@@ -33,7 +33,7 @@ struct F : D {
   using D::D;
 };
 
-class AD_Visitor final : public RawPtrMultiVisitor<AD_Visitor, A, D> {
+class AD_Visitor : public RawPtrMultiVisitor<AD_Visitor, A, D> {
  public:
   AD_Visitor() { Regist<A, B, C, D, E, F>(); }
 

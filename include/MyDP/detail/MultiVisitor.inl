@@ -24,6 +24,18 @@ using FilterBase = Front_t<Filter_t<List, IsBaseOf<Derived>::template Ttype>>;
 namespace My {
 template <typename Impl, template <typename> class AddPointer,
           typename PointerCaster, typename... Bases>
+template <typename DerivedPtr>
+void MultiVisitor<Impl, AddPointer, PointerCaster, Bases...>::RegistVFPtr(
+    DerivedPtr&& ptrDerived) noexcept {
+  using Derived = detail::Visitor_::RemovePtr<DerivedPtr>;
+  using BaseOfDerived =
+      detail::MultiVisitor_::FilterBase<TypeList<Bases...>, Derived>;
+  VisitorOf<BaseOfDerived>::template RegistVFPtr<DerivedPtr>(
+      std::forward<DerivedPtr>(ptrDerived));
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename... Bases>
 template <typename Derived>
 void MultiVisitor<Impl, AddPointer, PointerCaster,
                   Bases...>::RegistOne() noexcept {
