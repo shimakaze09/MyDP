@@ -4,18 +4,21 @@
 
 #pragma once
 
+#include "Connection.h"
+
 #include <functional>
 #include <map>
 
 namespace My {
 template <typename... Args>
-struct Signal {
+class Signal {
+ public:
   template <typename Slot>
-  size_t Connect(Slot&& slot);
+  Connection Connect(Slot&& slot);
 
   void Emit(Args... args) const;
 
-  void Disconnect(size_t id) { slots.erase(id); }
+  void Disconnect(Connection&& connection);
 
  private:
   size_t id{0};
