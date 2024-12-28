@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../vtable.h"
+
 #include <utility>
 
 namespace My {
@@ -21,6 +23,7 @@ class MemFunc<void (Obj::*)(void*)> {
 
   template <typename Ret, typename... Args>
   Ret Call(Obj& obj, Args&&... args) const noexcept {
+    assert(vtable_is<MemFunc<Ret (Obj::*)(Args...)>>(this));
     return (obj.*reinterpret_cast<Ret (Obj::*)(Args...)>(ptr))(
         std::forward<Args>(args)...);
   }
@@ -45,6 +48,8 @@ class MemFunc<void (Obj::*)(void*) const> {
 
   template <typename Ret, typename... Args>
   Ret Call(const Obj& obj, Args&&... args) const noexcept {
+    assert(vtable_is<MemFunc<Ret (Obj::*)(Args...) const>>(this) &&
+           "Ret(Args...) isn't correct");
     return (obj.*reinterpret_cast<Ret (Obj::*)(Args...) const>(ptr))(
         std::forward<Args>(args)...);
   }
@@ -62,9 +67,9 @@ template <typename Obj, typename Ret, typename... Args>
 class MemFunc<Ret (Obj::*)(Args...)> : public MemFunc<void (Obj::*)(void*)> {
  public:
   using Base = MemFunc<void (Obj::*)(void*)>;
+  using Func = Ret(Args...);
 
-  template <typename RetU, typename... ArgsU>
-  MemFunc(RetU (Obj::*ptr)(ArgsU...))
+  MemFunc(Func Obj::* ptr = nullptr)
       : Base(reinterpret_cast<void (Obj::*)(void*)>(ptr)) {}
 
   Ret Call(Obj& obj, Args&&... args) const noexcept {
@@ -80,9 +85,9 @@ class MemFunc<Ret (Obj::*)(Args...) const>
     : public MemFunc<void (Obj::*)(void*) const> {
  public:
   using Base = MemFunc<void (Obj::*)(void*) const>;
+  using Func = Ret(Args...) const;
 
-  template <typename RetU, typename... ArgsU>
-  MemFunc(RetU (Obj::*ptr)(ArgsU...) const)
+  MemFunc(Func Obj::* ptr = nullptr)
       : Base(reinterpret_cast<void (Obj::*)(void*) const>(ptr)) {}
 
   Ret Call(const Obj& obj, Args&&... args) const noexcept {
