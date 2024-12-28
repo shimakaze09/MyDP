@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <MyTemplate/FuncTraits.h>
+#include <../../../external/MyTemplate/include/MyTemplate/FuncTraits.h>
 
 #include <functional>
 #include <memory>
