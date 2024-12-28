@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "detail/TypeMap.h"
-
 #include <MyTemplate/FuncTraits.h>
 
 #include <functional>
