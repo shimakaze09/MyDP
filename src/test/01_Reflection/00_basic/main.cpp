@@ -32,13 +32,13 @@ int main() {
   Reflection<Point>::Instance().Var<float>("y").Of(p) = 4;
   for (auto nv : Reflection<Point>::Instance().Vars()) {
     cout << nv.first << ": ";
-    cout << nv.second.As<float>().Of(p) << endl;
+    cout << nv.second->As<float>().Of(p) << endl;
   }
   cout << Reflection<Point>::Instance().Call<float>("test", p, 1.f) << endl;
 
   for (auto nv : Reflection<Point>::Instance().Vars()) {
     cout << nv.first << ": ";
-    cout << nv.second.As<float>().Of(p) << endl;
+    cout << nv.second->As<float>().Of(p) << endl;
   }
   for (auto nf : Reflection<Point>::Instance().Funcs())
     cout << Reflection<Point>::Instance().GetName() << "::" << nf.first;

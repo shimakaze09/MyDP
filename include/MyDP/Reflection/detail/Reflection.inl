@@ -27,11 +27,11 @@ Reflection<Obj>& Reflection<Obj>::Regist(T Obj::* ptr,
 
 template <typename Obj>
 template <typename U>
-const MemVar<U Obj::*>* Reflection<Obj>::Var(
+const MemVar<U Obj::*> Reflection<Obj>::Var(
     const std::string& name) const noexcept {
   auto target = n2mv.find(name);
   if (target != n2mv.end())
-    return target->second.As<U>();
+    return target->second->As<U>();
   else {
 #ifndef NDEBUG
     std::cerr << "WARNING::Reflection::Var:" << std::endl
@@ -109,12 +109,12 @@ struct Call {
                  Args&&... args) {
     auto target_mf = refl.n2mf.find(name);
     if (target_mf != refl.n2mf.end())
-      return target_mf->second.template Call<Ret>(*obj,
-                                                  std::forward<Args>(args)...);
+      return target_mf->second->template Call<Ret>(*obj,
+                                                   std::forward<Args>(args)...);
     auto target_mfc = refl.n2mfc.find(name);
     if (target_mfc != refl.n2mfc.end())
-      return target_mfc->second.template Call<Ret>(*obj,
-                                                   std::forward<Args>(args)...);
+      return target_mfc->second->template Call<Ret>(
+          *obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
     std::cerr << "WARNING::Reflection::Call:" << std::endl
               << "\t" << "not found " << name << std::endl;
@@ -130,12 +130,12 @@ struct Call<Obj, Obj, Ret, Args...> {
                  Args&&... args) {
     auto target_mf = refl.n2mf.find(name);
     if (target_mf != refl.n2mf.end())
-      return target_mf->second.template Call<Ret>(obj,
-                                                  std::forward<Args>(args)...);
+      return target_mf->second->template Call<Ret>(obj,
+                                                   std::forward<Args>(args)...);
     auto target_mfc = refl.n2mfc.find(name);
     if (target_mfc != refl.n2mfc.end())
-      return target_mfc->second.template Call<Ret>(obj,
-                                                   std::forward<Args>(args)...);
+      return target_mfc->second->template Call<Ret>(
+          obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
     std::cerr << "WARNING::Reflection::Call:" << std::endl
               << "\t" << "not found " << name << std::endl;
@@ -151,12 +151,12 @@ struct Call<Obj, Obj&&, Ret, Args...> {
                  Args&&... args) {
     auto target_mf = refl.n2mf.find(name);
     if (target_mf != refl.n2mf.end())
-      return target_mf->second.template Call<Ret>(obj,
-                                                  std::forward<Args>(args)...);
+      return target_mf->second->template Call<Ret>(obj,
+                                                   std::forward<Args>(args)...);
     auto target_mfc = refl.n2mfc.find(name);
     if (target_mfc != refl.n2mfc.end())
-      return target_mfc->second.template Call<Ret>(obj,
-                                                   std::forward<Args>(args)...);
+      return target_mfc->second->template Call<Ret>(
+          obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
     std::cerr << "WARNING::Reflection::Call:" << std::endl
               << "\t" << "not found " << name << std::endl;
@@ -172,12 +172,12 @@ struct Call<Obj, Obj&, Ret, Args...> {
                  Args&&... args) {
     auto target_mf = refl.n2mf.find(name);
     if (target_mf != refl.n2mf.end())
-      return target_mf->second.template Call<Ret>(obj,
-                                                  std::forward<Args>(args)...);
+      return target_mf->second->template Call<Ret>(obj,
+                                                   std::forward<Args>(args)...);
     auto target_mfc = refl.n2mfc.find(name);
     if (target_mfc != refl.n2mfc.end())
-      return target_mfc->second.template Call<Ret>(obj,
-                                                   std::forward<Args>(args)...);
+      return target_mfc->second->template Call<Ret>(
+          obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
     std::cerr << "WARNING::Reflection::Call:" << std::endl
               << "\t" << "not found " << name << std::endl;
@@ -193,8 +193,8 @@ struct Call<Obj, const Obj&, Ret, Args...> {
                  Args&&... args) {
     auto target_mfc = refl.n2mfc.find(name);
     if (target_mfc != refl.n2mfc.end())
-      return target_mfc->second.template Call<Ret>(obj,
-                                                   std::forward<Args>(args)...);
+      return target_mfc->second->template Call<Ret>(
+          obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
     std::cerr << "WARNING::Reflection::Call:" << std::endl
               << "\t" << "not found " << name << std::endl;
