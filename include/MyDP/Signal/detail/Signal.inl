@@ -9,8 +9,8 @@
 #include <tuple>
 
 namespace My::detail::Signal_ {
-template <typename SignalArgList, typename SlotArgList>
-struct CheckCompatibleArguments;
+template <typename SlotArgList>
+struct SlotFit;
 }  // namespace My::detail::Signal_
 
 namespace My {
@@ -18,13 +18,13 @@ template <typename... Args>
 template <typename Slot>
 size_t Signal<Args...>::Connect(Slot&& slot) {
   using SlotArgList = typename FuncTraits<Slot>::ArgList;
-  detail::Signal_::SlotFit<SlotArgList>::run(*this, std::forward<Slot>(slot),
-                                             TypeList<Args...>{});
+  slots[id] = detail::Signal_::SlotFit<SlotArgList>::run(
+      std::forward<Slot>(slot), TypeList<Args...>{});
   return id++;
 }
 
 template <typename... Args>
-void Signal<Args...>::Emit(Args... args) {
+void Signal<Args...>::Emit(Args... args) const {
   for (auto p : slots)
     p.second(args...);
 }
@@ -99,18 +99,17 @@ template <typename... SlotArgs>
 struct SlotFit<TypeList<SlotArgs...>> {
   using SlotArgList = TypeList<SlotArgs...>;
 
-  template <typename Sig, typename Slot, typename... SignalArgs>
-  static void run(Sig& sig, Slot&& slot, TypeList<SignalArgs...>) {
+  template <typename Slot, typename... SignalArgs>
+  static auto run(Slot&& slot, TypeList<SignalArgs...>) {
     using SignalArgList = TypeList<SignalArgs...>;
-    sig.slots[sig.id] =
-        [slot = std::forward<Slot>(slot)](SignalArgs... signalArgs) {
-          std::tuple<SignalArgs...> argTuple{signalArgs...};
-          static_assert(
-              detail::Signal_::CheckCompatibleArguments<SignalArgList,
-                                                        SlotArgList>::value,
-              "Signal and slot arguments are not compatible.");
-          slot(std::get<Find_v<SlotArgList, SlotArgs>>(argTuple)...);
-        };
+    return [slot = std::forward<Slot>(slot)](SignalArgs... signalArgs) {
+      std::tuple<SignalArgs...> argTuple{signalArgs...};
+      static_assert(
+          detail::Signal_::CheckCompatibleArguments<SignalArgList,
+                                                    SlotArgList>::value,
+          "Signal and slot arguments are not compatible.");
+      slot(std::get<Find_v<SlotArgList, SlotArgs>>(argTuple)...);
+    };
   }
 };
 }  // namespace My::detail::Signal_
