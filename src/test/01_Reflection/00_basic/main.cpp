@@ -22,6 +22,7 @@ struct Point {
 
 int main() {
   Reflection<Point>::Instance()
+      .SetName("Point")
       .Regist(&Point::x, "x")
       .Regist(&Point::y, "y")
       .Regist(&Point::test, "test");
@@ -34,4 +35,11 @@ int main() {
     cout << nv.second.As<float>().Of(p) << endl;
   }
   cout << Reflection<Point>::Instance().Call<float>("test", p, 1.f) << endl;
+
+  for (auto nv : Reflection<Point>::Instance().Vars()) {
+    cout << nv.first << ": ";
+    cout << nv.second.As<float>().Of(p) << endl;
+  }
+  for (auto nf : Reflection<Point>::Instance().Funcs())
+    cout << Reflection<Point>::Instance().GetName() << "::" << nf.first;
 }
