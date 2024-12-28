@@ -42,7 +42,7 @@ const MemVar<U Obj::*> Reflection<Obj>::Var(
 }
 
 template <typename Obj>
-const std::map<std::string, MemVar<void * Obj::*>*> Reflection<Obj>::Vars()
+const std::map<std::string, MemVarBase<Obj>*> Reflection<Obj>::Vars()
     const noexcept {
   return n2mv;
 }
@@ -79,12 +79,12 @@ struct Regist<Ret (Obj::*)(Args...) const> {
   static void run(Reflection<Obj>& refl, Func Obj::* ptr,
                   const std::string& name) {
 #ifndef NDEBUG
-    if (refl.n2mfc.find(name) != refl.n2mfc.end()) {
+    if (refl.n2mcf.find(name) != refl.n2mcf.end()) {
       std::cerr << "WARNING::Reflection::Regist:" << std::endl
                 << "\t" << name << " is already registed" << std::endl;
     }
 #endif  // !NDEBUG
-    refl.n2mfc[name] = new MemFunc<Func Obj::*>{ptr};
+    refl.n2mcf[name] = new MemFunc<Func Obj::*>{ptr};
   }
 };
 
@@ -111,8 +111,8 @@ struct Call {
     if (target_mf != refl.n2mf.end())
       return target_mf->second->template Call<Ret>(*obj,
                                                    std::forward<Args>(args)...);
-    auto target_mfc = refl.n2mfc.find(name);
-    if (target_mfc != refl.n2mfc.end())
+    auto target_mfc = refl.n2mcf.find(name);
+    if (target_mfc != refl.n2mcf.end())
       return target_mfc->second->template Call<Ret>(
           *obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
@@ -132,8 +132,8 @@ struct Call<Obj, Obj, Ret, Args...> {
     if (target_mf != refl.n2mf.end())
       return target_mf->second->template Call<Ret>(obj,
                                                    std::forward<Args>(args)...);
-    auto target_mfc = refl.n2mfc.find(name);
-    if (target_mfc != refl.n2mfc.end())
+    auto target_mfc = refl.n2mcf.find(name);
+    if (target_mfc != refl.n2mcf.end())
       return target_mfc->second->template Call<Ret>(
           obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
@@ -153,8 +153,8 @@ struct Call<Obj, Obj&&, Ret, Args...> {
     if (target_mf != refl.n2mf.end())
       return target_mf->second->template Call<Ret>(obj,
                                                    std::forward<Args>(args)...);
-    auto target_mfc = refl.n2mfc.find(name);
-    if (target_mfc != refl.n2mfc.end())
+    auto target_mfc = refl.n2mcf.find(name);
+    if (target_mfc != refl.n2mcf.end())
       return target_mfc->second->template Call<Ret>(
           obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
@@ -174,8 +174,8 @@ struct Call<Obj, Obj&, Ret, Args...> {
     if (target_mf != refl.n2mf.end())
       return target_mf->second->template Call<Ret>(obj,
                                                    std::forward<Args>(args)...);
-    auto target_mfc = refl.n2mfc.find(name);
-    if (target_mfc != refl.n2mfc.end())
+    auto target_mfc = refl.n2mcf.find(name);
+    if (target_mfc != refl.n2mcf.end())
       return target_mfc->second->template Call<Ret>(
           obj, std::forward<Args>(args)...);
 #ifndef NDEBUG
@@ -191,8 +191,8 @@ template <typename Obj, typename Ret, typename... Args>
 struct Call<Obj, const Obj&, Ret, Args...> {
   static Ret run(Reflection<Obj>& refl, const std::string& name, const Obj& obj,
                  Args&&... args) {
-    auto target_mfc = refl.n2mfc.find(name);
-    if (target_mfc != refl.n2mfc.end())
+    auto target_mfc = refl.n2mcf.find(name);
+    if (target_mfc != refl.n2mcf.end())
       return target_mfc->second->template Call<Ret>(
           obj, std::forward<Args>(args)...);
 #ifndef NDEBUG

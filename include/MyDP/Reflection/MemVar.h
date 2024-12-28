@@ -9,46 +9,40 @@ template <typename Obj_T>
 class MemVar;
 
 template <typename Obj>
-class MemVar<void * Obj::*> {
+class MemVarBase {
  public:
-  MemVar(void* Obj::* ptr = nullptr) : ptr(ptr) {}
+  MemVarBase(void* Obj::* var = nullptr) : var{var} {}
 
-  virtual ~MemVar() = default;
+  virtual ~MemVarBase() = default;
 
   template <typename U>
   const MemVar<U Obj::*> As() const noexcept {
-    return reinterpret_cast<U Obj::*>(ptr);
+    return reinterpret_cast<U Obj::*>(var);
   }
 
  protected:
-  void* Obj::* ptr;
+  void* Obj::* var;
 };
 
 template <typename Obj, typename T>
-class MemVar<T Obj::*> final : public MemVar<void * Obj::*> {
+class MemVar<T Obj::*> : public MemVarBase<Obj> {
  public:
-  using Base = MemVar<void * Obj::*>;
+  MemVar(T Obj::* var = nullptr)
+      : MemVarBase<Obj>(reinterpret_cast<void * Obj::*>(var)) {}
 
-  template <typename U>
-  MemVar(T Obj::* ptr = nullptr) : Base(reinterpret_cast<void * Obj::*>(ptr)) {}
+  T& Of(Obj& obj) const noexcept { return obj.*get(); }
 
-  T& Of(Obj& obj) const noexcept {
-    return obj.*reinterpret_cast<T Obj::*>(Base::ptr);
-  }
+  T& Of(Obj* obj) const noexcept { return obj->*get(); }
 
-  T& Of(Obj* obj) const noexcept {
-    return obj->*reinterpret_cast<T Obj::*>(Base::ptr);
-  }
+  const T& Of(const Obj& obj) const noexcept { return obj.*get(); }
 
-  const T& Of(const Obj& obj) const noexcept {
-    return obj.*reinterpret_cast<T Obj::*>(Base::ptr);
-  }
-
-  const T& Of(const Obj* obj) const noexcept {
-    return obj->*reinterpret_cast<T Obj::*>(Base::ptr);
-  }
+  const T& Of(const Obj* obj) const noexcept { return obj->*get(); }
 
  private:
-  using Base::As;
+  T Obj::* get() const noexcept {
+    return reinterpret_cast<T Obj::*>(MemVarBase<Obj>::var);
+  }
+
+  using MemVarBase<Obj>::As;
 };
 }  // namespace My

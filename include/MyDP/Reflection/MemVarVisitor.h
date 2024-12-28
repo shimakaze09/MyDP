@@ -4,33 +4,36 @@
 
 #pragma once
 
-#include "MemVar.h"
 #include "../Visitor/Visitor.h"
+#include "MemVar.h"
 
 #include <iostream>
 #include <string>
 
 namespace My {
-template<typename Impl, typename Obj>
-struct MemVarVisitor : RawPtrVisitor<MemVarVisitor<Impl, Obj>, MemVar<void* Obj::*>> {
-  template<typename... Ts>
+template <typename Impl, typename Obj>
+struct MemVarVisitor
+    : RawPtrVisitor<MemVarVisitor<Impl, Obj>, MemVarBase<Obj>> {
+  template <typename... Ts>
   inline void Regist() noexcept {
-    RawPtrVisitor<MemVarVisitor<Impl, Obj>, MemVar<void* Obj::*>>::template Regist<MemVar<Ts Obj::*>...>();
+    RawPtrVisitor<MemVarVisitor<Impl, Obj>,
+                  MemVarBase<Obj>>::template Regist<MemVar<Ts Obj::*>...>();
   }
 
-  template<typename... Funcs>
+  template <typename... Funcs>
   inline void Regist(Funcs&&... func) noexcept {
-    RawPtrVisitor<MemVarVisitor<Impl, Obj>, MemVar<void* Obj::*>>::template Regist<Funcs...>(std::forward<Funcs>(func)...);
+    RawPtrVisitor<MemVarVisitor<Impl, Obj>, MemVarBase<Obj>>::template Regist<
+        Funcs...>(std::forward<Funcs>(func)...);
   }
 
-  template<typename T>
+  template <typename T>
   void ImplVisit(MemVar<T Obj::*>* memvar) {
     static_cast<Impl*>(this)->ImplVisit(memvar->Of(obj));
   }
 
   void SetObj(Obj* obj) { this->obj = obj; }
 
-private:
-  Obj* obj{ nullptr };
+ private:
+  Obj* obj{nullptr};
 };
-}
+}  // namespace My
