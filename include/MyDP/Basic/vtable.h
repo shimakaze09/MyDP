@@ -21,6 +21,11 @@ inline static const void* vtable(void* ptr) noexcept {
   return *reinterpret_cast<const void* const*>(ptr);
 }
 
+inline static const void* vtable(const void* ptr) noexcept {
+  assert(ptr != nullptr);
+  return *reinterpret_cast<const void* const*>(ptr);
+}
+
 template <typename Ptr>
 inline static const void* vtable(Ptr&& ptr) noexcept {
   assert(ptr != nullptr);

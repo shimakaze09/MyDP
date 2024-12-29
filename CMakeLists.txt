@@ -2,7 +2,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20 FATAL_ERROR)
 
 # Set the project
-PROJECT(MyDP VERSION 0.2.0 LANGUAGES CXX)
+PROJECT(MyDP VERSION 0.2.2 LANGUAGES CXX)
 MESSAGE(STATUS "Project: ${PROJECT_NAME} ${PROJECT_VERSION}")
 
 # Add 'd' postfix for debug builds
@@ -36,7 +36,7 @@ INCLUDE(FETCHCONTENT)
 MESSAGE(STATUS "Looking for: MyCMake v0.3.0")
 FIND_PACKAGE(MyCMake 0.3.0 QUIET)
 IF (${MyCMake_FOUND})
-    MESSAGE(STATUS "MyCMake v${PACKAGE_VERSION} found")
+    MESSAGE(STATUS "MyCMake v${MyCMake_VERSION} found")
 ELSE ()
     SET(ADDRESS "https://github.com/shimakaze09/MyCMake.git")
     MESSAGE(STATUS "MyCMake v0.3.0 not found\n"

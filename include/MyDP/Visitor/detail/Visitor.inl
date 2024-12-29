@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../vtable.h"
+#include "../../Basic/vtable.h"
 
 #include <MyTemplate/TypeList.h>
 #include <cassert>
@@ -15,7 +15,9 @@
 
 namespace My::detail::Visitor_ {
 template <typename Pointer>
-using RemovePtr = std::decay_t<decltype(*std::decay_t<Pointer>{nullptr})>;
+using RemovePtr =
+    std::remove_reference_t<decltype(*std::remove_reference_t<Pointer>{
+        nullptr})>;
 
 struct VoidImpl final {};
 }  // namespace My::detail::Visitor_
@@ -42,6 +44,14 @@ struct Visitor<Impl, AddPointer, PointerCaster, Base>::Accessor : public Impl {
     constexpr void (Impl::*f)(AddPointer<Derived>) = &Impl::ImplVisit;
     (impl->*f)(PointerCaster::template run<Derived, Base>(ptrBase));
   }
+
+  template <typename Derived>
+  inline static void ImplVisitOfC(Impl* const impl,
+                                  AddPointer<const Base> ptrCBase) noexcept {
+    constexpr void (Impl::*f)(AddPointer<const Derived>) = &Impl::ImplVisit;
+    (impl->*f)(
+        PointerCaster::template run<const Derived, const Base>(ptrCBase));
+  }
 };
 
 template <typename Impl, template <typename> class AddPointer,
@@ -49,12 +59,32 @@ template <typename Impl, template <typename> class AddPointer,
 void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
     void* ptr) const noexcept {
   const void* vt = vtable(ptr);
-  auto target = callbacks.find(vt);
-  if (target != callbacks.end()) {
-    size_t offset = offsets.find(vt)->second;
-    Base* ptr_base =
+  auto offsetTarget = offsets.find(vt);
+  if (offsetTarget != offsets.end()) {
+    size_t offset = offsetTarget->second;
+    Base* ptrBase =
         reinterpret_cast<Base*>(reinterpret_cast<size_t>(ptr) + offset);
-    target->second(ptr_base);
+    Visit(ptrBase);
+  }
+#ifndef NDEBUG
+  else {
+    std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+              << "\t" << "hasn't regist" << std::endl;
+  }
+#endif  // !NDEBUG
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
+    const void* ptr) const noexcept {
+  const void* vt = vtable(ptr);
+  auto offsetTarget = offsets.find(vt);
+  if (offsetTarget != offsets.end()) {
+    size_t offset = offsetTarget->second;
+    const Base* ptrCBase =
+        reinterpret_cast<const Base*>(reinterpret_cast<size_t>(ptr) + offset);
+    Visit(ptrCBase);
   }
 #ifndef NDEBUG
   else {
@@ -71,13 +101,18 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
   auto target = callbacks.find(vtable(ptrBase));
   if (target != callbacks.end())
     target->second(ptrBase);
-#ifndef NDEBUG
   else {
-    std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
-              << "\t" << "hasn't regist " << typeid(*ptrBase).name()
-              << std::endl;
-  }
+    auto ctarget = const_callbacks.find(vtable(ptrBase));
+    if (ctarget != const_callbacks.end())
+      ctarget->second(ptrBase);
+#ifndef NDEBUG
+    else {
+      std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+                << "\t" << "hasn't regist " << typeid(*ptrBase).name()
+                << std::endl;
+    }
 #endif  // !NDEBUG
+  }
 }
 
 template <typename Impl, template <typename> class AddPointer,
@@ -87,10 +122,47 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
   auto target = callbacks.find(vtable(ptrBase));
   if (target != callbacks.end())
     target->second(std::forward<BasePointer>(ptrBase));
+  else {
+    auto ctarget = const_callbacks.find(vtable(ptrBase));
+    if (ctarget != const_callbacks.end())
+      ctarget->second(std::forward<BasePointer>(ptrBase));
+#ifndef NDEBUG
+    else {
+      std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+                << "\t" << "hasn't regist " << typeid(*ptrBase).name()
+                << std::endl;
+    }
+#endif  // !NDEBUG
+  }
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
+    CBasePointer& ptrCBase) const noexcept {
+  auto ctarget = const_callbacks.find(vtable(ptrCBase));
+  if (ctarget != const_callbacks.end())
+    ctarget->second(ptrCBase);
 #ifndef NDEBUG
   else {
     std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
-              << "\t" << "hasn't regist " << typeid(*ptrBase).name()
+              << "\t" << "hasn't regist " << typeid(*ptrCBase).name()
+              << std::endl;
+  }
+#endif  // !NDEBUG
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
+    CBasePointer&& ptrCBase) const noexcept {
+  auto ctarget = const_callbacks.find(vtable(ptrCBase));
+  if (ctarget != const_callbacks.end())
+    ctarget->second(std::forward<CBasePointer>(ptrCBase));
+#ifndef NDEBUG
+  else {
+    std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+              << "\t" << "hasn't regist " << typeid(*ptrCBase).name()
               << std::endl;
   }
 #endif  // !NDEBUG
@@ -104,24 +176,39 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
   using DerivedPointer = Front_t<typename FuncTraits<Func>::ArgList>;
   using Derived = detail::Visitor_::RemovePtr<DerivedPointer>;
   static_assert(std::is_same_v<DerivedPointer, AddPointer<Derived>>);
-  static_assert(std::is_base_of_v<Base, Derived>);
+  static_assert(std::is_base_of_v<Base, std::decay_t<Derived>>);
 
-  const void* p = vtable_of<Derived>::get();
+  const void* p = vtable_of<std::decay_t<Derived>>::get();
   assert(p != nullptr);
 
 #ifndef NDEBUG
-  if (callbacks.find(p) != callbacks.end()) {
-    std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
-              << "\t" << "repeatedly regist " << typeid(Derived).name()
-              << std::endl;
+  if constexpr (std::is_const_v<Derived>) {
+    if (const_callbacks.find(p) != const_callbacks.end()) {
+      std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+                << "\t" << "repeatedly regist " << typeid(Derived).name()
+                << std::endl;
+    }
+  } else {
+    if (callbacks.find(p) != callbacks.end()) {
+      std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+                << "\t" << "repeatedly regist " << typeid(Derived).name()
+                << std::endl;
+    }
   }
 #endif  // !NDEBUG
 
-  callbacks[p] = [func = std::forward<Func>(func)](BasePointer ptrBase) {
-    func(PointerCaster::template run<Derived, Base>(ptrBase));
-  };
+  if constexpr (std::is_const_v<Derived>) {
+    const_callbacks[p] = [func =
+                              std::forward<Func>(func)](CBasePointer ptrCBase) {
+      func(PointerCaster::template run<Derived, const Base>(ptrCBase));
+    };
+  } else {
+    callbacks[p] = [func = std::forward<Func>(func)](BasePointer ptrBase) {
+      func(PointerCaster::template run<Derived, Base>(ptrBase));
+    };
+  }
 
-  offsets[p] = offset<Base, Derived>();
+  offsets[p] = offset<Base, std::decay_t<Derived>>();
 }
 
 template <typename Impl, template <typename> class AddPointer,
@@ -146,8 +233,17 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne() noexcept {
 template <typename Impl, template <typename> class AddPointer,
           typename PointerCaster, typename Base>
 template <typename Derived>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOneC() noexcept {
+  RegistOneC<Derived>(static_cast<Impl*>(this));
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+template <typename Derived>
 inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
     Impl* impl) noexcept {
+  static_assert(!std::is_const_v<Derived>);
+
   const void* p = vtable_of<Derived>::get();
   assert(p != nullptr);
 
@@ -168,11 +264,45 @@ inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
 
 template <typename Impl, template <typename> class AddPointer,
           typename PointerCaster, typename Base>
+template <typename Derived>
+inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOneC(
+    Impl* impl) noexcept {
+  static_assert(!std::is_const_v<Derived>);
+
+  const void* p = vtable_of<Derived>::get();
+  assert(p != nullptr);
+
+#ifndef NDEBUG
+  if (const_callbacks.find(p) != const_callbacks.end()) {
+    std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+              << "\t" << "repeatedly regist " << typeid(Derived).name()
+              << std::endl;
+  }
+#endif  // !NDEBUG
+
+  const_callbacks[p] = [impl](CBasePointer ptrCBase) {
+    Accessor::template ImplVisitOfC<Derived>(impl, ptrCBase);
+  };
+
+  offsets[p] = offset<Base, Derived>();
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
 template <typename... Deriveds>
 inline void Visitor<Impl, AddPointer, PointerCaster, Base>::Regist() noexcept {
   static_assert(std::is_polymorphic_v<Base>);
   static_assert(IsSet_v<TypeList<Deriveds...>>);
   (RegistOne<Deriveds>(), ...);
+}
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+template <typename... Deriveds>
+inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistC() noexcept {
+  static_assert(std::is_polymorphic_v<Base>);
+  static_assert(IsSet_v<TypeList<Deriveds...>>);
+  (RegistOneC<Deriveds>(), ...);
 }
 
 template <typename Impl, typename Base>

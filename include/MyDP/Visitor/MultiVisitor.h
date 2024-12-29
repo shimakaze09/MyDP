@@ -29,6 +29,7 @@ class MultiVisitor
   template <typename DerivedPtr>
   inline void Visit(DerivedPtr&& ptr_derived) const noexcept;
   inline void Visit(void* ptr) const noexcept;
+  inline void Visit(const void* ptr) const noexcept;
 
   // for Derived without default constructor
   template <typename DerivedPtr>
@@ -40,14 +41,20 @@ class MultiVisitor
   // - argument : AddPointer<Deriveds>
   template <typename... Deriveds>
   inline void Regist() noexcept;
+  template <typename... Deriveds>
+  inline void RegistC() noexcept;
 
  private:
   template <typename Func>
   inline void RegistOne(Func&& func) noexcept;
   template <typename Derived>
   inline void RegistOne() noexcept;
+  template <typename Derived>
+  inline void RegistOneC() noexcept;
   template <typename Base>
   bool VisitOne(void* ptr) const;
+  template <typename Base>
+  bool VisitOne(const void* ptr) const;
 
   template <typename Base>
   using VisitorOf = Visitor<Impl, AddPointer, PointerCaster, Base>;
