@@ -6,8 +6,6 @@
 #include <MyDP/Reflection/Reflection.h>
 #include <MyDP/Visitor/MultiVisitor.h>
 
-#include "nameof.hpp"
-
 #include <iostream>
 #include <string>
 
@@ -70,21 +68,19 @@ struct Serializer : RawPtrMultiVisitor<Serializer, Figure, Cosmetics> {
 };
 
 int main() {
-  Reflection<Sphere>::Instance()
-      .SetName(nameof::nameof_type<Sphere>().data())
-      .Regist(&Sphere::radius, NAMEOF(&Sphere::radius).data());
+  Reflection<Sphere>::Instance().SetName("Sphere").Regist(&Sphere::radius,
+                                                          "radius");
 
-  Reflection<Square>::Instance()
-      .SetName(nameof::nameof_type<Square>().data())
-      .Regist(&Square::sideLength, NAMEOF(&Square::sideLength).data());
+  Reflection<Square>::Instance().SetName("Square").Regist(&Square::sideLength,
+                                                          "sideLength");
 
   Reflection<Lipstick>::Instance()
-      .SetName(nameof::nameof_type<Lipstick>().data())
-      .Regist(&Lipstick::name, NAMEOF(&Lipstick::name).data());
+      .SetName("Lipstick")
+      .Regist(&Lipstick::name, "name");
 
   Reflection<Lipglaze>::Instance()
-      .SetName(nameof::nameof_type<Lipglaze>().data())
-      .Regist(&Lipglaze::color, NAMEOF(&Lipglaze::color).data());
+      .SetName("Lipglaze")
+      .Regist(&Lipglaze::color, "color");
 
   Serializer serializer;
   Sphere a;
