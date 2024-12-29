@@ -1,1 +1,1 @@
-ADD_TARGET(MODE "HEAD" SOURCES "include" LIBS My::MyTemplate_core)
+ADD_TARGET(MODE "HEAD" INTERFACE_INC ON LIBS My::MyTemplate_core)

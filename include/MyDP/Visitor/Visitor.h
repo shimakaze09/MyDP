@@ -39,6 +39,7 @@ class Visitor {
 
  public:
   // dynamic double dispatch
+  inline void Visit(void* ptr) const noexcept;
   inline void Visit(BasePointer& ptrBase) const noexcept;
   inline void Visit(BasePointer&& ptrBase) const noexcept;
 
@@ -67,9 +68,17 @@ class Visitor {
   template <typename Derived>
   inline void RegistOne(Impl* impl) noexcept;  // for MultiVisitor
 
+  template <typename Base, typename Derived>
+  static size_t offset() noexcept {
+    return reinterpret_cast<size_t>(
+               static_cast<Base*>(reinterpret_cast<Derived*>(1))) -
+           1;
+  }
+
  private:
   // vtable to callbacks
   std::unordered_map<const void*, std::function<void(BasePointer)>> callbacks;
+  std::unordered_map<const void*, size_t> offsets;
 
  private:
   struct Accessor;

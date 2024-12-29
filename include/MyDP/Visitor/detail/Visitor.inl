@@ -6,7 +6,7 @@
 
 #include "../../vtable.h"
 
-#include <MyTemplate/Typelist.h>
+#include <MyTemplate/TypeList.h>
 #include <cassert>
 
 #ifndef NDEBUG
@@ -43,6 +43,26 @@ struct Visitor<Impl, AddPointer, PointerCaster, Base>::Accessor : public Impl {
     (impl->*f)(PointerCaster::template run<Derived, Base>(ptrBase));
   }
 };
+
+template <typename Impl, template <typename> class AddPointer,
+          typename PointerCaster, typename Base>
+void Visitor<Impl, AddPointer, PointerCaster, Base>::Visit(
+    void* ptr) const noexcept {
+  const void* vt = vtable(ptr);
+  auto target = callbacks.find(vt);
+  if (target != callbacks.end()) {
+    size_t offset = offsets.find(vt)->second;
+    Base* ptr_base =
+        reinterpret_cast<Base*>(reinterpret_cast<size_t>(ptr) + offset);
+    target->second(ptr_base);
+  }
+#ifndef NDEBUG
+  else {
+    std::cout << "WARNING::" << typeid(Impl).name() << "::Visit:" << std::endl
+              << "\t" << "hasn't regist" << std::endl;
+  }
+#endif  // !NDEBUG
+}
 
 template <typename Impl, template <typename> class AddPointer,
           typename PointerCaster, typename Base>
@@ -100,6 +120,8 @@ void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
   callbacks[p] = [func = std::forward<Func>(func)](BasePointer ptrBase) {
     func(PointerCaster::template run<Derived, Base>(ptrBase));
   };
+
+  offsets[p] = offset<Base, Derived>();
 }
 
 template <typename Impl, template <typename> class AddPointer,
@@ -140,6 +162,8 @@ inline void Visitor<Impl, AddPointer, PointerCaster, Base>::RegistOne(
   callbacks[p] = [impl](BasePointer ptrBase) {
     Accessor::template ImplVisitOf<Derived>(impl, ptrBase);
   };
+
+  offsets[p] = offset<Base, Derived>();
 }
 
 template <typename Impl, template <typename> class AddPointer,

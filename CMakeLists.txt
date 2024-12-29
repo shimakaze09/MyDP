@@ -2,7 +2,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20 FATAL_ERROR)
 
 # Set the project
-PROJECT(MyDP VERSION 0.1 LANGUAGES CXX)
+PROJECT(MyDP VERSION 0.1.1 LANGUAGES CXX)
 MESSAGE(STATUS "Project: ${PROJECT_NAME} ${PROJECT_VERSION}")
 
 # Add 'd' postfix for debug builds
@@ -32,18 +32,19 @@ SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Add CMake modules
 INCLUDE(FETCHCONTENT)
-FIND_PACKAGE(MyCMake 0.1 EXACT QUIET)
+FIND_PACKAGE(MyCMake 0.2.0 QUIET)
 IF (${MyCMake_FOUND})
-    MESSAGE(STATUS "MyCMake-0.1 found")
+    MESSAGE(STATUS "MyCMake-0.2.0 found")
 ELSE ()
-    MESSAGE(STATUS "MyCMake-0.1 not found, fetching...")
+    MESSAGE(STATUS "MyCMake-0.2.0 not found, fetching...")
     FETCHCONTENT_DECLARE(
             MyCMake
             GIT_REPOSITORY https://github.com/shimakaze09/MyCMake.git
-            GIT_TAG "v0.1"
+            GIT_TAG "v0.2.0"
     )
+    message(STATUS "Building MyCMake-0.2.0")
     FETCHCONTENT_MAKEAVAILABLE(MyCMake)
-    MESSAGE(STATUS "${DEP}-${VERSION} fetched")
+    MESSAGE(STATUS "MyCMake-0.2.0 built")
 ENDIF ()
 
 # Set default build path prefix
