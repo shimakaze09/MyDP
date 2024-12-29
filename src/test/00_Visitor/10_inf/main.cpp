@@ -1,8 +1,8 @@
 //
-// Created by Admin on 29/12/2024.
+// Created by Admin on 30/12/2024.
 //
 
-#include <MyDP/Visitor/MultiVisitor.h>
+#include <MyDP/Visitor/InfVisitor.h>
 
 #include <iostream>
 #include <memory>
@@ -33,7 +33,7 @@ struct F : D {
   using D::D;
 };
 
-class AD_Visitor : public RawPtrMultiVisitor<AD_Visitor, A, D> {
+class AD_Visitor : public InfVisitor<AD_Visitor> {
  public:
   AD_Visitor() {
     RegistC<A, B, D, E>();
