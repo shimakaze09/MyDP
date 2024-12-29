@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <cassert>
 #include <type_traits>
+
+#include <cassert>
 
 namespace My {
 template <typename T>
@@ -37,16 +38,7 @@ struct vtable_of {
     regist(&(*ptr));
   }
 
-  inline static const void* get() noexcept {
-    if (!value) {
-      if constexpr (std::is_constructible_v<T>) {
-        T tmp{};
-        regist(&tmp);
-      } else
-        assert(false);
-    }
-    return value;
-  }
+  inline static const void* get() noexcept;
 
  private:
   inline static const void* value{nullptr};
@@ -62,3 +54,5 @@ inline static bool vtable_is(Base* ptr) noexcept {
   return vtable(ptr) == vtable_of<Derived>::get();
 }
 }  // namespace My
+
+#include "detail/vtable.inl"
