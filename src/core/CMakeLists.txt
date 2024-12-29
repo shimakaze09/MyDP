@@ -1,0 +1,1 @@
+ADD_TARGET(MODE "HEAD" SOURCES "include" LIBS My::MyTemplate_core)
