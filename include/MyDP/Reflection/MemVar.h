@@ -69,7 +69,5 @@ class MemVar<T Obj::*> : public MemVarBase<Obj> {
   }
 
   using MemVarBase<Obj>::As;
-
-  VarPtr<T> pvar;
 };
 }  // namespace My

@@ -6,6 +6,7 @@
 
 #include "MemFunc.h"
 #include "MemVar.h"
+#include "ReflTraits.h"
 
 #include <map>
 #include <string>
@@ -37,6 +38,11 @@ struct Reflection final {
 
   inline const std::map<std::string, MemVarBase<Obj>*> Vars() const noexcept;
 
+  inline const std::map<std::string, std::shared_ptr<VarPtrBase>> VarPtrs(
+      Obj& obj) const noexcept;
+  inline const std::map<std::string, std::shared_ptr<const VarPtrBase>> VarPtrs(
+      const Obj& obj) const noexcept;
+
   template <typename Ret = void, typename RObj, typename... Args>
   inline Ret Call(const std::string& name, RObj&& obj, Args&&... args);
 
@@ -53,7 +59,8 @@ struct Reflection final {
   std::map<std::string, MemFuncBase<Obj>*> n2mf;
   std::map<std::string, MemCFuncBase<Obj>*> n2mcf;
   std::string name;
-  Reflection() = default;
+
+  Reflection() { ReflTraitsIniter::Instance().Regist<Obj>(); }
 
   template <typename Mem>
   friend struct detail::Reflection_::Regist;

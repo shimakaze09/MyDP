@@ -7,9 +7,6 @@
 #include "../Visitor/Visitor.h"
 #include "MemVar.h"
 
-#include <iostream>
-#include <string>
-
 namespace My {
 template <typename Impl, typename Obj>
 struct MemVarVisitor
