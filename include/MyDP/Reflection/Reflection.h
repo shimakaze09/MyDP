@@ -28,6 +28,12 @@ struct Reflection final : ReflectionBase {
 
   const std::string& GetName() noexcept { return name; }
 
+  // call after SetName()
+  Reflection& RegistConstructor();
+  template <typename Func>
+  Reflection& RegistConstructor(Func&& func);
+
+  // member variable pointer, member function pointer
   template <typename T>
   Reflection& Regist(T Obj::* ptr, const std::string& name) noexcept;
 
@@ -66,7 +72,7 @@ struct Reflection final : ReflectionBase {
 
   Reflection() {
     ReflTraitsIniter::Instance().Regist<Obj>();
-    ReflectionMngr::Instance().Regist<Obj>(this);
+    ReflectionMngr::Instance().RegistRefl<Obj>(this);
   }
 
   template <typename Mem>

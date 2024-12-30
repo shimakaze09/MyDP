@@ -22,6 +22,20 @@ struct Read {
 
   const T* operator->() const noexcept { return &val; }
 
+  Read(const Read& read) noexcept : val{read.val} {}
+
+  Read(Read&& read) noexcept : val{std::move(read.val)} {}
+
+  Read& operator=(const Read& read) noexcept {
+    val = read.val;
+    return *this;
+  }
+
+  Read& operator=(Read&& read) noexcept {
+    val = std::move(read.val);
+    return *this;
+  }
+
  private:
   friend Friend;
   T val;
