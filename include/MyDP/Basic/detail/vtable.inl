@@ -9,7 +9,7 @@
 namespace My::detail::vtable_ {
 template <typename Base>
 struct Derived;
-}
+}  // namespace My::detail::vtable_
 
 namespace My {
 template <typename T>
@@ -22,7 +22,7 @@ inline const void* vtable_of<T>::get() noexcept {
       detail::vtable_::Derived<T> tmp{};
       regist(&tmp.t);
     } else
-      assert(false);
+      return nullptr;
   }
   return value;
 }
